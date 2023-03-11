@@ -1,8 +1,4 @@
-//Generates a random number between two values
-const randomIntFromInterval = (min, max) => {
-  // min and max included
-  return Math.floor(Math.random() * (max - min + 1) + min);
-};
+const { randomIntFromInterval } = require("..");
 
 /*
  * Generates an array that represent a column from a bingo board
@@ -35,7 +31,7 @@ const generateColumn = (range = [1, 15]) => {
  * G 46-60
  * O 61-75
  */
-export const generateBingoCard = (
+const generateBingoCard = (
   bRange = [1, 15],
   iRange = [16, 30],
   nRange = [31, 45],
@@ -50,3 +46,5 @@ export const generateBingoCard = (
 
   return [bColumn, iColumn, nColumn, gColumn, oColumn];
 };
+
+module.exports = { generateBingoCard };
