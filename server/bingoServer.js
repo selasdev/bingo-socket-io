@@ -62,12 +62,16 @@ class BingoServer {
      * @param {Socket} socket can be null!
      */
     changeGameMode(mode, socket) {
+        if (mode == 'FULL' && !this.canStillPlay()) {
+            return;
+        }
         this.gameState.mode = mode;
         this.io.emit(serverEvents.changeGameMode, {
             mode: this.gameState.mode
         });
         if (mode == 'FULL') {
             this.gameState.numbers = generateGameSequence();
+            this.startGame();
         }
     }
 
