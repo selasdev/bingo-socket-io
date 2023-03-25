@@ -8,10 +8,6 @@ const { generateGameSequence } = require("./utils/bingo/game");
 
 const io = new Server(server);
 
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
-});
-
 app.get("/generateCard", (req, res) => {
   res.send({
     type: "GENERATE_CARD",
@@ -45,6 +41,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3000, () => {
-  console.log("listening on *:3000");
+server.listen(4000, () => {
+  console.log("listening on *:4000");
 });
