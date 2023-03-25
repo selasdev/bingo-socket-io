@@ -5,8 +5,14 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const { generateBingoCard } = require("./utils/bingo/cardGenerator");
 const { generateGameSequence } = require("./utils/bingo/game");
+const { BingoServer } = require("./server/bingoServer");
 
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
 app.get("/generateCard", (req, res) => {
   res.send({
@@ -26,21 +32,8 @@ app.get("/gameSequence", (req, res) => {
   });
 });
 
-io.on("connection", (socket) => {
-  socket.broadcast.emit("hi");
-  console.log("a user connected");
-
-  socket.on("disconnect", () => {
-    console.log("user disconnected");
-  });
-
-  socket.on("chat message", (msg) => {
-    console.log("message: " + msg);
-
-    io.emit("chat message", msg);
-  });
-});
-
 server.listen(4000, () => {
   console.log("listening on *:4000");
+  const bingoServer = new BingoServer(io);
+  console.log("bingo server initialized");
 });
