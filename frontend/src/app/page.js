@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import io from "socket.io-client";
 import UserInfo from "./views/UserInfo";
 import styles from "./page.module.css";
+import BingoCard from "./views/Card";
 
 export default function Home() {
   const [username, setUsername] = useState(undefined);
@@ -23,18 +24,24 @@ export default function Home() {
 
   return (
     <div className={styles.main}>
-      {(username === undefined || table === undefined) && (
+      {(username === undefined || table === undefined) ? (
         <UserInfo
           socket={socket}
           setUsername={setUsername}
           setTable={setTable}
         />
+      ) : (
+        <BingoCard 
+          socket={socket} 
+          table={table}
+          setTable={setTable}
+        />
       )}
 
-      {username &&
+      {/* {username &&
         table &&
         !tableConfirmed &&
-        "Esperando confirmación de tabla"}
+        "Esperando confirmación de tabla"} */}
     </div>
   );
 }
