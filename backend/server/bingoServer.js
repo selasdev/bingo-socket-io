@@ -5,7 +5,6 @@ const { Server, Socket } = require("socket.io");
 const { serverEvents, clientEvents } = require("./events");
 const { generateBingoCard } = require("../utils/bingo/cardGenerator");
 const { generateGameSequence, checkForWin } = require("../utils/bingo/game");
-const { setInterval } = require("timers/promises");
 const BINGO_NUMBERS_DELAY = 4000;
 
 class BingoServer {
@@ -98,11 +97,10 @@ class BingoServer {
       name: playerName,
       table: null,
     };
-    this.gameState.players[newPlayer.id] = newPlayer;
     this.io.emit(serverEvents.playerConnected, {
       player: newPlayer,
     });
-    this.sendTable(socket);
+    this.sendTable(socket, newPlayer);
   }
 
   /**
@@ -115,7 +113,7 @@ class BingoServer {
    */
   removePlayer(socket) {
     console.log("player disconnected", socket?.id);
-    const player = this.gameState.players[socket.id];
+    const player = this.gameState.players.get(socket.id);
     if (player == null) {
       return;
     }
@@ -141,10 +139,15 @@ class BingoServer {
    *  table: [[]] -> [int][int]
    * }
    * @param {Socket} socket not null
+   * @param {} newPlayer 
    */
-  sendTable(socket) {
+  sendTable(socket, newPlayer = null) {
     const table = generateBingoCard();
-    this.gameState.players[socket.id].table = table;
+    const player = newPlayer ? newPlayer : this.gameState.players.get(socket.id);
+    if (!newPlayer) {
+      this.gameState.players.delete(socket.id);
+    }
+    this.gameState.players.set(socket.id, {...player, table});
     socket.emit(serverEvents.tableAssigned, {
       table: table,
     });
@@ -159,7 +162,8 @@ class BingoServer {
    * @param {Socket} socket socket
    */
   userAcceptedTable(socket) {
-    const playersMapWithoutTargetPlayer = this.gameState.players.filter(
+    const arrayOfPlayersFiltered = Array.from(this.gameState.players).map(p => p[1]);
+    const playersMapWithoutTargetPlayer = arrayOfPlayersFiltered.filter(
       (k, v) => {
         v.id !== socket.id;
       }
