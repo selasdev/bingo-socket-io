@@ -139,7 +139,7 @@ class BingoServer {
    *  table: [[]] -> [int][int]
    * }
    * @param {Socket} socket not null
-   * @param {} newPlayer 
+   * @param {Object} newPlayer - Optional. An object containing player information.
    */
   sendTable(socket, newPlayer = null) {
     const table = generateBingoCard();
@@ -162,8 +162,8 @@ class BingoServer {
    * @param {Socket} socket socket
    */
   userAcceptedTable(socket) {
-    const arrayOfPlayersFiltered = Array.from(this.gameState.players).map(p => p[1]);
-    const playersMapWithoutTargetPlayer = arrayOfPlayersFiltered.filter(
+    const players = Array.from(this.gameState.players).map(p => p[1]);
+    const playersMapWithoutTargetPlayer = players.filter(
       (k, v) => {
         v.id !== socket.id;
       }
