@@ -144,9 +144,6 @@ class BingoServer {
   sendTable(socket, newPlayer = null) {
     const table = generateBingoCard();
     const player = newPlayer ? newPlayer : this.gameState.players.get(socket.id);
-    if (!newPlayer) {
-      this.gameState.players.delete(socket.id);
-    }
     this.gameState.players.set(socket.id, {...player, table});
     socket.emit(serverEvents.tableAssigned, {
       table: table,
@@ -165,12 +162,12 @@ class BingoServer {
     const players = Array.from(this.gameState.players).map(p => p[1]);
     const playersMapWithoutTargetPlayer = players.filter(
       (k, v) => {
-        v.id !== socket.id;
+        k[0] !== socket.id;
       }
     );
     socket.emit(serverEvents.joinedGame, {
       otherPlayers: playersMapWithoutTargetPlayer,
-      player: this.gameState.players[socket.id],
+      player: this.gameState.players.get(socket.id),
     });
   }
 
@@ -199,6 +196,15 @@ class BingoServer {
       this.changeGameMode("NORMAL", null);
       return;
     }
+    // Update on each board the new number that has been generated
+    this.gameState.players.forEach((player) => {
+      const table = player.table;
+      const tableIndex = table.findIndex((row) => row.includes(newNumber));
+      if (tableIndex !== -1) {
+        table[tableIndex][table[tableIndex].indexOf(newNumber)] = -1;
+      }
+      this.gameState.players.set(player.id, {...player, table});
+    });
     this.io.emit(serverEvents.newNumber, {
       number: newNumber,
     });
@@ -226,15 +232,18 @@ class BingoServer {
    * @returns
    */
   checkIfPlayerWin(socket) {
-    const player = this.gameState.players[socket.id];
+    const player = this.gameState.players.get(socket.id);
     if (player === undefined) {
       return;
     }
     const table = player.table;
-    const hasWon = this.validateWinByPlayMode(his.gameState.playMode, table);
+    const hasWon = this.validateWinByPlayMode(this.gameState.playMode, table);
     if (hasWon) {
       this.io.emit(serverEvents.win, {
-        winner: player,
+        winner: {
+          id: player.id,
+          name: player.name
+        }
       });
     }
   }
