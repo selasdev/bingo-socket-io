@@ -3,7 +3,7 @@ import { Box, Center, Heading, Grid, GridItem, Button, Spinner, Text, Flex, HSta
 import styles from "./index.module.css";
 import { clientEvents, serverEvents } from "@/utils/constants";
 
-const BingoCard = ({ socket, table = [], setTable }) => {
+const BingoCard = ({ socket, table = [], setTable, setWinner }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [card, setCard] = useState(table);
     const [loadingMessage, setLoadingMessage] = useState("Esperando al usuario por escoger un cartón...");
@@ -11,6 +11,7 @@ const BingoCard = ({ socket, table = [], setTable }) => {
     const [previousNumber, setPreviousNumber] = useState(null);
     const [playerId, setPlayerId] = useState(null);
     const [otherPlayers, setOtherPlayers] = useState([]);
+    const [haveWonMessage, setHaveWonMessage] = useState("");
 
     const isSocketConnected = socket && socket.connected;
 
@@ -62,22 +63,24 @@ const BingoCard = ({ socket, table = [], setTable }) => {
         if (isSocketConnected) {
             socket.emit(clientEvents.answerTable, { accept: true });
             socket.on(serverEvents.joinedGame, ({ otherPlayers, player }) => {
-                setPlayerId(player);
-                setOtherPlayers(otherPlayers);
+                if (!playerId) {
+                    setPlayerId(player);
+                    setOtherPlayers(otherPlayers);
+                }
             });
         }
     };
 
     const claimWin = () => {
+        setTimeout(() => {
+            setHaveWonMessage("");
+        }, 3000);
+        setHaveWonMessage("No hay ganadores todavía!");
         if (isSocketConnected) {
             socket.emit(clientEvents.claimWin);
             socket.on(serverEvents.win, ({ winner }) => {
-                console.log(winner)
-                if (playerId === winner) {
-                    setLoadingMessage("winner!!!!!!!!!!!!" + winner);
-                } else {
-                    setLoadingMessage("No ha ganao");
-                }
+                console.log("WINNER", winner)
+                setWinner(winner.name);
             });
         }
     };
@@ -178,6 +181,15 @@ const BingoCard = ({ socket, table = [], setTable }) => {
                                 <Button mt={4} colorScheme="teal" onClick={claimWin} disabled={isLoading}>
                                     Bingo!
                                 </Button>
+                                <Text 
+                                    m={4}
+                                    fontSize={16}
+                                    fontWeight="bold"
+                                    textAlign="center"
+                                >
+                                    {haveWonMessage}
+                                </Text>
+
                                 <Flex alignItems="center" justifyContent="flex-end">
                                     <Box
                                         mt={4}

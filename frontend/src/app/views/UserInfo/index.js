@@ -35,7 +35,7 @@ const UserInfo = ({ socket, setUsername, setTable }) => {
       socket.connect();
       setLoadingMessage("Esperando respuesta del servidor...");
 
-      socket.emit(clientEvents.newPlayer, { playerName: "Carlos" });
+      socket.emit(clientEvents.newPlayer, { playerName: transientUsername });
       socket.on(serverEvents.tableAssigned, ({ table }) => {
         if (table) {
           console.log("table assigned", table);
