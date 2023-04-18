@@ -74,7 +74,7 @@ const BingoCard = ({ socket, table = [], setTable, setWinner }) => {
 
   const acceptCard = () => {
     setHasAcceptedCard(true);
-    setLoadingMessage("Esperando nuevos numeros...");
+    setLoadingMessage("El juego iniciará cuando hayan dos o más jugadores...");
     if (isSocketConnected) {
       socket.emit(clientEvents.answerTable, { accept: true });
       socket.on(serverEvents.joinedGame, ({ otherPlayers, player }) => {
@@ -90,7 +90,7 @@ const BingoCard = ({ socket, table = [], setTable, setWinner }) => {
     setTimeout(() => {
       setHaveWonMessage("");
     }, 3000);
-    setHaveWonMessage("No hay ganadores todavía!");
+    setHaveWonMessage("No has ganado todavía!");
     if (isSocketConnected) {
       socket.emit(clientEvents.claimWin);
     }
@@ -114,6 +114,7 @@ const BingoCard = ({ socket, table = [], setTable, setWinner }) => {
           console.log("new number!", number, "index", index);
           markItem(index);
           setPreviousNumber(number);
+          setLoadingMessage("El juego ha comenzado, esperando números...");
         }
       });
     }
