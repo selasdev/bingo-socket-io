@@ -77,11 +77,9 @@ const BingoCard = ({ socket, table = [], setTable, setWinner, setEnd }) => {
     setLoadingMessage("El juego iniciará cuando hayan dos o más jugadores...");
     if (isSocketConnected) {
       socket.emit(clientEvents.answerTable, { accept: true });
-      socket.on(serverEvents.joinedGame, ({ otherPlayers, player }) => {
+      socket.on(serverEvents.joinedGame, ({ player }) => {
         if (!playerId) {
           setPlayerId(player);
-          setOtherPlayers(otherPlayers);
-          console.log("otherPlayers", otherPlayers);
         }
       });
     }
@@ -127,14 +125,14 @@ const BingoCard = ({ socket, table = [], setTable, setWinner, setEnd }) => {
         console.log("Game ended");
         setEnd(true);
       });
-    }
-  }, [isSocketConnected]);
 
-  useEffect(() => {
-    if (isSocketConnected) {
       socket.on(serverEvents.win, ({ winner }) => {
         console.log("WINNER", winner);
         setWinner(winner.name);
+      });
+
+      socket.on(serverEvents.joinedGame, ({ otherPlayers }) => {
+        setOtherPlayers(otherPlayers);
       });
     }
   }, [isSocketConnected]);
@@ -150,13 +148,7 @@ const BingoCard = ({ socket, table = [], setTable, setWinner, setEnd }) => {
 
             {otherPlayersState.map((player) => (
               <Flex alignItems="flex-start" p={4}>
-                <Box
-                  w={4}
-                  h={4}
-                  borderRadius="full"
-                  bg={isSocketConnected ? "green.500" : "red.500"}
-                  mr={2}
-                />
+                <Box w={4} h={4} borderRadius="full" bg={"green.500"} mr={2} />
                 <Text fontSize="sm" fontWeight="medium">
                   {player.name}
                 </Text>

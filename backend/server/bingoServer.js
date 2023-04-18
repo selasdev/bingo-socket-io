@@ -93,6 +93,7 @@ class BingoServer {
       id: socket.id,
       name: playerName,
       table: null,
+      tableConfirmed: false,
     };
     this.io.emit(serverEvents.playerConnected, {
       player: newPlayer,
@@ -127,7 +128,13 @@ class BingoServer {
    * @returns true if players maps contains at least two values
    */
   canStillPlay() {
-    return this.gameState.players.size > 1;
+    const filteredMap = new Map(
+      [...this.gameState.players].filter(
+        ([id, player]) => player.tableConfirmed
+      )
+    );
+
+    return filteredMap.size > 1;
   }
 
   /**
@@ -143,7 +150,11 @@ class BingoServer {
     const player = newPlayer
       ? newPlayer
       : this.gameState.players.get(socket.id);
-    this.gameState.players.set(socket.id, { ...player, table });
+    this.gameState.players.set(socket.id, {
+      ...player,
+      table,
+      tableConfirmed: false,
+    });
     socket.emit(serverEvents.tableAssigned, {
       table: table,
     });
@@ -159,6 +170,13 @@ class BingoServer {
    */
   userAcceptedTable(socket) {
     const players = Array.from(this.gameState.players).map((p) => p[1]);
+
+    const player = this.gameState.players.get(socket.id);
+    this.gameState.players.set(socket.id, {
+      ...player,
+      tableConfirmed: true,
+    });
+
     socket.emit(serverEvents.joinedGame, {
       otherPlayers: players,
       player: this.gameState.players.get(socket.id),
