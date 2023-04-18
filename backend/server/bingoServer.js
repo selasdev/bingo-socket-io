@@ -1,11 +1,8 @@
-const express = require("express");
-const app = express();
-const server = require("http").createServer(app);
-const { Server, Socket } = require("socket.io");
+const { Socket } = require("socket.io");
 const { serverEvents, clientEvents } = require("./events");
 const { generateBingoCard } = require("../utils/bingo/cardGenerator");
 const { generateGameSequence, checkForWin } = require("../utils/bingo/game");
-const BINGO_NUMBERS_DELAY = 4000;
+const BINGO_NUMBERS_DELAY = 1000;
 
 class BingoServer {
   constructor(io) {
@@ -143,8 +140,10 @@ class BingoServer {
    */
   sendTable(socket, newPlayer = null) {
     const table = generateBingoCard();
-    const player = newPlayer ? newPlayer : this.gameState.players.get(socket.id);
-    this.gameState.players.set(socket.id, {...player, table});
+    const player = newPlayer
+      ? newPlayer
+      : this.gameState.players.get(socket.id);
+    this.gameState.players.set(socket.id, { ...player, table });
     socket.emit(serverEvents.tableAssigned, {
       table: table,
     });
@@ -159,12 +158,10 @@ class BingoServer {
    * @param {Socket} socket socket
    */
   userAcceptedTable(socket) {
-    const players = Array.from(this.gameState.players).map(p => p[1]);
-    const playersMapWithoutTargetPlayer = players.filter(
-      (k, v) => {
-        k[0] !== socket.id;
-      }
-    );
+    const players = Array.from(this.gameState.players).map((p) => p[1]);
+    const playersMapWithoutTargetPlayer = players.filter((k, v) => {
+      k[0] !== socket.id;
+    });
     socket.emit(serverEvents.joinedGame, {
       otherPlayers: playersMapWithoutTargetPlayer,
       player: this.gameState.players.get(socket.id),
@@ -172,7 +169,7 @@ class BingoServer {
   }
 
   /**
-   * Emits and gameStarted event with an empty payload
+   * Emits a gameStarted event with an empty payload
    */
   startGame() {
     this.io.emit(serverEvents.gameStarted, {});
@@ -180,9 +177,21 @@ class BingoServer {
   }
 
   /**
+   * Ends game
+   * interval is cleared and the game mode changes to normal.
+   */
+  endGame() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+    this.changeGameMode("NORMAL", null);
+  }
+
+  /**
    * Pops a number from the game state's numbers variable and send its to the clients.
    * If the new number does or the game is no longer valid by @function canPlay , the
-   * interval is cleared and the game mode changes to normal.
+   * game is ended
    * Emitted Payload: {
    *  number: int
    * }
@@ -191,9 +200,7 @@ class BingoServer {
     const newNumber = this.gameState.numbers.pop();
     const canPlay = this.canStillPlay();
     if (newNumber === undefined || !canPlay) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-      this.changeGameMode("NORMAL", null);
+      this.endGame();
       return;
     }
     // Update on each board the new number that has been generated
@@ -203,11 +210,12 @@ class BingoServer {
       if (tableIndex !== -1) {
         table[tableIndex][table[tableIndex].indexOf(newNumber)] = -1;
       }
-      this.gameState.players.set(player.id, {...player, table});
+      this.gameState.players.set(player.id, { ...player, table });
     });
     this.io.emit(serverEvents.newNumber, {
       number: newNumber,
     });
+    console.log("numero emitido:", newNumber);
   }
 
   /**
@@ -233,6 +241,7 @@ class BingoServer {
    */
   checkIfPlayerWin(socket) {
     const player = this.gameState.players.get(socket.id);
+    console.log("el jugador ", player.name, "intento cantar victoria");
     if (player === undefined) {
       return;
     }
@@ -242,9 +251,12 @@ class BingoServer {
       this.io.emit(serverEvents.win, {
         winner: {
           id: player.id,
-          name: player.name
-        }
+          name: player.name,
+        },
       });
+      this.endGame();
+    } else {
+      console.log("falso cante");
     }
   }
 
@@ -269,6 +281,3 @@ class BingoServer {
 }
 
 module.exports = { BingoServer };
-
-// TODO start server
-// TODO create BingoServer object
