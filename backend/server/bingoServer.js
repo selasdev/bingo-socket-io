@@ -159,11 +159,8 @@ class BingoServer {
    */
   userAcceptedTable(socket) {
     const players = Array.from(this.gameState.players).map((p) => p[1]);
-    const playersMapWithoutTargetPlayer = players.filter((k, v) => {
-      k[0] !== socket.id;
-    });
     socket.emit(serverEvents.joinedGame, {
-      otherPlayers: playersMapWithoutTargetPlayer,
+      otherPlayers: players,
       player: this.gameState.players.get(socket.id),
     });
   }
@@ -186,6 +183,7 @@ class BingoServer {
       this.intervalId = null;
     }
     this.changeGameMode("NORMAL", null);
+    this.io.emit(serverEvents.gameEnded, {});
   }
 
   /**

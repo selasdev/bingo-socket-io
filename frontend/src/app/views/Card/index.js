@@ -14,7 +14,7 @@ import {
 import styles from "./index.module.css";
 import { clientEvents, serverEvents } from "@/utils/constants";
 
-const BingoCard = ({ socket, table = [], setTable, setWinner }) => {
+const BingoCard = ({ socket, table = [], setTable, setWinner, setEnd }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [card, setCard] = useState(table);
   const [loadingMessage, setLoadingMessage] = useState(
@@ -23,7 +23,7 @@ const BingoCard = ({ socket, table = [], setTable, setWinner }) => {
   const [hasAcceptedCard, setHasAcceptedCard] = useState(false);
   const [previousNumber, setPreviousNumber] = useState(null);
   const [playerId, setPlayerId] = useState(null);
-  const [otherPlayers, setOtherPlayers] = useState([]);
+  const [otherPlayersState, setOtherPlayers] = useState([]);
   const [haveWonMessage, setHaveWonMessage] = useState("");
 
   const isSocketConnected = socket && socket.connected;
@@ -81,6 +81,7 @@ const BingoCard = ({ socket, table = [], setTable, setWinner }) => {
         if (!playerId) {
           setPlayerId(player);
           setOtherPlayers(otherPlayers);
+          console.log("otherPlayers", otherPlayers);
         }
       });
     }
@@ -122,6 +123,15 @@ const BingoCard = ({ socket, table = [], setTable, setWinner }) => {
 
   useEffect(() => {
     if (isSocketConnected) {
+      socket.on(serverEvents.gameEnded, () => {
+        console.log("Game ended");
+        setEnd(true);
+      });
+    }
+  }, [isSocketConnected]);
+
+  useEffect(() => {
+    if (isSocketConnected) {
       socket.on(serverEvents.win, ({ winner }) => {
         console.log("WINNER", winner);
         setWinner(winner.name);
@@ -131,6 +141,31 @@ const BingoCard = ({ socket, table = [], setTable, setWinner }) => {
 
   return (
     <Center h="100vh">
+      {otherPlayersState.length >= 1 && (
+        <Box bg="white" p={4} boxShadow="lg" borderRadius="md" mr={4}>
+          <Flex justifyContent="flex-start" flexDirection={"column"}>
+            <Text fontSize="sm" fontWeight="medium">
+              Jugadores conectados
+            </Text>
+
+            {otherPlayersState.map((player) => (
+              <Flex alignItems="flex-start" p={4}>
+                <Box
+                  w={4}
+                  h={4}
+                  borderRadius="full"
+                  bg={isSocketConnected ? "green.500" : "red.500"}
+                  mr={2}
+                />
+                <Text fontSize="sm" fontWeight="medium">
+                  {player.name}
+                </Text>
+              </Flex>
+            ))}
+          </Flex>
+        </Box>
+      )}
+
       <Box bg="white" w="532px" p={4} boxShadow="lg" borderRadius="md">
         <Flex alignItems="center" justifyContent="flex-end" mb={3}>
           <Box

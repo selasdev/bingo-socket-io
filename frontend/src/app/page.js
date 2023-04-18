@@ -5,13 +5,14 @@ import UserInfo from "./views/UserInfo";
 import styles from "./page.module.css";
 import BingoCard from "./views/Card";
 import WinnerOverlay from "./views/Winner";
+import EndOverlay from "./views/End";
 
 export default function Home() {
   const [username, setUsername] = useState(undefined);
   const [table, setTable] = useState(undefined);
-  const [tableConfirmed, setTableConfirmed] = useState(false);
   const [socket, setSocket] = useState(null);
   const [winner, setWinner] = useState(null);
+  const [end, setEnd] = useState(false);
 
   useEffect(() => {
     const newSocket = io(`http://localhost:4000`, {
@@ -26,23 +27,26 @@ export default function Home() {
 
   return (
     <div className={styles.main}>
-      {(username === undefined || table === undefined) ? (
+      {username === undefined || table === undefined ? (
         <UserInfo
           socket={socket}
           setUsername={setUsername}
           setTable={setTable}
         />
-      ) : (!winner) ? (
-        <BingoCard 
-          socket={socket} 
-          table={table}
-          setTable={setTable}
-          setWinner={setWinner}
-        /> 
+      ) : !winner ? (
+        !end ? (
+          <BingoCard
+            socket={socket}
+            table={table}
+            setTable={setTable}
+            setWinner={setWinner}
+            setEnd={setEnd}
+          />
+        ) : (
+          <EndOverlay />
+        )
       ) : (
-        <WinnerOverlay 
-          winner={winner} 
-        />
+        <WinnerOverlay winner={winner} />
       )}
 
       {/* {username &&
