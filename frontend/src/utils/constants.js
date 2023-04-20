@@ -5,6 +5,7 @@ export const serverEvents = {
   changeGameMode: "lobby-closed",
   tableAssigned: "table-assigned",
   gameStarted: "game-has-started",
+  gameEnded: "game-has-ended",
   newNumber: "num-announced",
   win: "win-announced",
 };
